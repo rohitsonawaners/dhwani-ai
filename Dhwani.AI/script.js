@@ -702,8 +702,7 @@ async function sendMessage() {
       body: JSON.stringify({
         message: text,
         history: chatHistory.slice(-6),
-        userName: userName,
-        apiKey: apiKey
+        userName: userName
       })
     });
 
@@ -775,8 +774,7 @@ async function regenerateLastResponse() {
       body: JSON.stringify({
         message: lastUserMsg,
         history: chatHistory.slice(-6),
-        userName: userName,
-        apiKey: apiKey
+        userName: userName
       })
     });
 
@@ -1037,7 +1035,7 @@ async function saveSettings() {
   }
 
   if (urlInput) {
-    backendUrl = urlInput.value.trim() || "http://127.0.0.1:5000";
+    backendUrl = urlInput.value.trim().replace(/\/+$/, "") || "http://127.0.0.1:5000";
     localStorage.setItem("dhwani_backend_url", backendUrl);
   }
 
@@ -1045,17 +1043,7 @@ async function saveSettings() {
     apiKey = keyInput.value.trim();
     if (apiKey) {
       localStorage.setItem("dhwani_api_key", apiKey);
-      // Sync key with backend .env
-      try {
-        await fetch(`${backendUrl}/save-key`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ apiKey: apiKey })
-        });
-        showToast("Connected to AI Model! ⚡");
-      } catch (e) {
-        showToast("Preferences saved locally!");
-      }
+      showToast("Connected to AI Model! ⚡");
     } else {
       localStorage.removeItem("dhwani_api_key");
       showToast("Key cleared. Using local engine.");

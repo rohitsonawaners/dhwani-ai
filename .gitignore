@@ -1,4 +1,4 @@
-﻿# ==========================================
+# ==========================================
 # SECURITY: NEVER SHARE OR COMMIT API KEYS!
 # ==========================================
 .env
@@ -8,6 +8,7 @@ Dhwani.AI-Backend/.env
 
 # Python Cache & Bytecode
 __pycache__/
+*.pyc
 *.py[cod]
 *.class
 .venv/

@@ -141,15 +141,19 @@ graph TD
 Create a file named `.env` inside `Dhwani.AI-Backend/` (or copy `.env.example`):
 
 ```env
-# Free Groq API Key (starts with gsk_)
-GROQ_API_KEY=gsk_your_actual_groq_api_key_here
+# Optional server-level fallback Groq key (Users enter their own BYOK key in Settings)
+GROQ_API_KEY=
 
-# Server Configuration
+# Optional CORS allowed origin (e.g. your deployed Netlify URL)
+FRONTEND_URL=https://your-dhwani-app.netlify.app
+
+# Server Configuration (Render sets PORT automatically)
 PORT=5000
-HOST=127.0.0.1
+HOST=0.0.0.0
 ```
 
 > [!IMPORTANT]
+> - **Zero Server Persistence**: Dhwani AI uses client-side BYOK. User API keys are stored in the browser's localStorage and sent only with requests. The backend never writes keys to `.env` or disk.
 > - Never hardcode or push your `.env` file to GitHub.
 > - `.gitignore` is already configured to automatically ignore `.env`.
 
