@@ -21,17 +21,37 @@ if sys.platform == "win32":
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS Configuration: Support configurable FRONTEND_URL (Netlify) with local development fallback
+frontend_env = os.environ.get("FRONTEND_URL", "").strip()
+if frontend_env:
+    allowed_origins = [o.strip().rstrip("/") for o in frontend_env.split(",") if o.strip()]
+    allowed_origins.extend([
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5000",
+        "http://127.0.0.1:5500",
+        "http://127.0.0.1:8000",
+        "null"
+    ])
+    CORS(app, resources={r"/*": {"origins": allowed_origins}}, allow_headers=["Content-Type", "X-OpenAI-Key", "Authorization"])
+else:
+    CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "X-OpenAI-Key", "Authorization"])
 
 # ===============================
 # Helper: AI Client Initializer (Supports Free Groq, OpenRouter & OpenAI)
 # ===============================
 def get_ai_client_and_model(custom_key=None):
-    api_key = custom_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("GROQ_API_KEY")
-    if not api_key or not api_key.strip() or api_key.strip().startswith("your_openai_api_key"):
+    # BYOK: User-provided key takes priority for that request
+    api_key = custom_key or os.environ.get("GROQ_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if not api_key or not str(api_key).strip():
+        return None, None
+    key = str(api_key).strip()
+    if key.startswith("your_") or key.startswith("gsk_your_"):
         return None, None
 
-    key = api_key.strip()
     try:
         # Free Groq API Key (starts with gsk_) -> 100% Free, no credit card required
         if key.startswith("gsk_"):
@@ -44,7 +64,7 @@ def get_ai_client_and_model(custom_key=None):
         # Standard OpenAI API Key
         return OpenAI(api_key=key), "gpt-4o-mini"
     except Exception as e:
-        print(f"[ERROR] AI Client init error: {e}")
+        print(f"[ERROR] AI Client init error: {type(e).__name__}")
         return None, None
 
 # ===============================
@@ -359,43 +379,37 @@ def fallback_chat(message: str, user_name: str = "", lang: str = "hinglish"):
 def health():
     custom_key = request.headers.get("X-OpenAI-Key") or request.args.get("apiKey")
     client, model_name = get_ai_client_and_model(custom_key)
+    is_configured = client is not None
     return jsonify({
         "status": "ok",
         "service": "Dhwani AI Backend",
-        "openai_configured": client is not None,
+        "configured": is_configured,
+        "openai_configured": is_configured,
         "model": model_name or "local_fallback"
     })
 
 # ===============================
-# SAVE API KEY ENDPOINT
+# SAVE API KEY ENDPOINT (COMPATIBILITY - NO PERSISTENCE)
 # ===============================
 @app.route("/save-key", methods=["POST"])
 def save_key():
+    """Compatibility endpoint: Never writes or persists keys to .env or disk.
+    Dhwani AI uses ephemeral Bring-Your-Own-Key (BYOK) sent per request."""
     try:
         data = request.get_json() or {}
         key = data.get("apiKey", "").strip()
         if not key:
             return jsonify({"status": "error", "message": "Key cannot be empty"}), 400
 
-        env_path = os.path.join(os.path.dirname(__file__), ".env")
-        if key.startswith("gsk_"):
-            os.environ["GROQ_API_KEY"] = key
-            with open(env_path, "w", encoding="utf-8") as f:
-                f.write(f"GROQ_API_KEY={key}\nPORT=5000\nHOST=127.0.0.1\n")
-        else:
-            os.environ["OPENAI_API_KEY"] = key
-            with open(env_path, "w", encoding="utf-8") as f:
-                f.write(f"OPENAI_API_KEY={key}\nPORT=5000\nHOST=127.0.0.1\n")
-
         client, model = get_ai_client_and_model(key)
-        print(f"[INFO] Saved API Key to .env - Provider model: {model}")
         return jsonify({
             "status": "ok",
             "configured": client is not None,
-            "model": model
+            "model": model or "local_fallback",
+            "message": "BYOK active: key is client-side only and never stored on server"
         })
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception:
+        return jsonify({"status": "error", "message": "Validation failed"}), 500
 
 # ===============================
 # CHAT ENDPOINT
@@ -516,7 +530,7 @@ def chat():
                 })
 
             except Exception as api_err:
-                print(f"[WARN] AI API call ({model_name}) failed, falling back to local engine:", api_err)
+                print(f"[WARN] AI API call ({model_name}) failed, falling back to local engine: {type(api_err).__name__}")
 
         # Fallback Engine (when API key is not present or API call fails)
         reply, emotion = fallback_chat(user_message, user_name=user_name, lang=user_lang)
@@ -528,8 +542,7 @@ def chat():
         })
 
     except Exception as e:
-        print("[ERROR] Unexpected error in /chat")
-        traceback.print_exc()
+        print(f"[ERROR] Unexpected error in /chat: {type(e).__name__}")
         return jsonify({
             "dialogue": "I had a tiny hiccup connecting, but I'm right here! Could you say that again?",
             "emotion": "caring",
@@ -538,13 +551,16 @@ def chat():
         })
 
 # ===============================
-# SERVER START
+# SERVER START (Render & Local Compatible)
 # ===============================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    host = os.environ.get("HOST", "127.0.0.1")
-    has_key = bool(os.environ.get("OPENAI_API_KEY") and not os.environ.get("OPENAI_API_KEY").startswith("your_openai_api_key"))
-    print(f"[INFO] Dhwani AI Backend running on http://{host}:{port}")
-    print(f"[STATUS] OpenAI Status: {'Configured' if has_key else 'Not set (Fallback engine active)'}")
+    host = os.environ.get("HOST", "0.0.0.0")
+    server_has_key = bool(
+        (os.environ.get("GROQ_API_KEY") and not os.environ.get("GROQ_API_KEY").startswith("your_")) or
+        (os.environ.get("OPENAI_API_KEY") and not os.environ.get("OPENAI_API_KEY").startswith("your_"))
+    )
+    print(f"[INFO] Dhwani AI Backend listening on http://{host}:{port}")
+    print(f"[STATUS] Server-side fallback key: {'Configured' if server_has_key else 'None (Ephemeral BYOK active)'}")
     app.run(host=host, port=port, debug=False)
 
