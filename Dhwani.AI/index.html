@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dhwani AI ❤️ Your Voice Companion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="background-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-info">
+        <div class="title-row">
+          <h2>Dhwani AI</h2>
+          <span class="heart-pulse" aria-hidden="true">❤️</span>
+        </div>
+        <div class="status-pill" id="statusPill" title="Server Status" aria-live="polite">
+          <span class="status-dot"></span>
+          <span class="status-text" id="statusText">Online</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="muteBtn" title="Mute/Unmute Voice" aria-label="Toggle voice sound" onclick="toggleMute()">
+          <span id="muteIcon">🔊</span>
+        </button>
+        <button class="icon-btn" id="clearBtn" title="Clear Conversation" aria-label="Clear chat history" onclick="clearChat()">
+          <span>🗑️</span>
+        </button>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings" onclick="openSettings()">
+          <span>⚙️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CHARACTER / REACTION AREA -->
+    <section class="character-section" aria-label="Dhwani Character and Emotion Display">
+      <div class="character-card" id="characterCard" data-emotion="neutral">
+        <div class="aura-glow" id="auraGlow"></div>
+        <div class="character-image-box">
+          <img
+            id="dhwaniImage"
+            src="neutral.png"
+            alt="Dhwani AI Companion Avatar"
+            draggable="false"
+          >
+          <div class="emotion-badge" id="emotionBadge">
+            <span class="badge-emoji" id="badgeEmoji">🌸</span>
+            <span class="badge-label" id="badgeLabel">Calm & Ready</span>
+          </div>
+        </div>
+
+        <!-- SOUND WAVE VISUALIZER -->
+        <div class="sound-wave" id="soundWave" title="Voice Visualizer" aria-hidden="true">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK SUGGESTIONS -->
+    <div class="suggestions-container" id="suggestionsContainer" aria-label="Quick suggestions">
+      <button class="suggestion-chip" onclick="quickSend('Namaste Dhwani! Kaisi ho? 😊')">
+        👋 Namaste Dhwani!
+      </button>
+      <button class="suggestion-chip" onclick="quickSend('Ek mazedaar joke sunao na! 😂')">
+        😂 Ek joke sunao
+      </button>
+      <button class="suggestion-chip" onclick="quickSend('Thoda stress ho raha hai, kya karun?')">
+        🌿 Stress ho raha hai
+      </button>
+      <button class="suggestion-chip" onclick="quickSend('I got my first client today! 🎉')">
+        🎉 Got my first client!
+      </button>
+      <button class="suggestion-chip" onclick="quickSend('Give me some motivation for today! ✨')">
+        ✨ Motivation please
+      </button>
+      <button class="suggestion-chip" onclick="quickSend('Tumhe mere baare mein kya yaad hai? 🧠')">
+        🧠 Memory check
+      </button>
+    </div>
+
+    <!-- CHAT AREA -->
+    <main class="chat-box" id="chatBox" role="log" aria-live="polite" aria-label="Conversation history">
+      <!-- Welcome message -->
+      <div class="message-row dhwani-row">
+        <div class="avatar-mini" aria-hidden="true">🌸</div>
+        <div class="message dhwani">
+          <div class="message-sender">Dhwani AI</div>
+          <div class="message-body">Namaste! Main Dhwani hoon 😊 Batao, aaj ka din kaisa chal raha hai? Main sun rahi hoon!</div>
+          <div class="message-meta">
+            <span class="message-time">Just now</span>
+            <button class="action-mini-btn" onclick="replayMessage(this)" title="Speak again" aria-label="Speak message again">🔊</button>
+            <button class="action-mini-btn" onclick="copyMessage(this)" title="Copy text" aria-label="Copy message text">📋</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- INPUT AREA -->
+    <footer class="input-box">
+      <div class="mic-wrapper">
+        <button 
+          class="mic-btn" 
+          id="micBtn" 
+          title="Click to Speak (Speech-to-Text)" 
+          aria-label="Voice input"
+          onclick="toggleSpeechRecognition()"
+        >
+          <span id="micIcon">🎙️</span>
+          <span class="mic-wave"></span>
+        </button>
+        <span class="mic-status-label" id="micStatusLabel"></span>
+      </div>
+      <div class="input-field-wrapper">
+        <textarea
+          id="userInput"
+          rows="1"
+          placeholder="Message Dhwani..."
+          title="Type your message. Press Enter to send, Shift+Enter for a new line."
+          aria-label="Message text"
+          autocomplete="off"
+        ></textarea>
+      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send message" aria-label="Send message">
+        <span>Send</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsModal" onclick="handleModalClick(event)">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header">
+        <h3 id="settingsTitle">Settings & Preferences ⚙️</h3>
+        <button class="close-btn" aria-label="Close settings" onclick="closeSettings()">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label for="userNameInput">Your Name (Conversational Memory)</label>
+          <input 
+            type="text" 
+            id="userNameInput" 
+            placeholder="e.g. Rohit"
+            autocomplete="name"
+          >
+          <small>Dhwani will naturally address you by your name in conversations.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="apiKeyInput">AI API Key (Free Groq / OpenAI / OpenRouter)</label>
+          <div class="input-with-toggle">
+            <input 
+              type="password" 
+              id="apiKeyInput" 
+              placeholder="Paste free Groq key (gsk_...) or OpenAI (sk-...)"
+            >
+            <button type="button" class="text-toggle-btn" onclick="toggleKeyVisibility()">Show</button>
+          </div>
+          <small>✨ <b>Recommended 100% Free:</b> Get free key from <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" style="color:#ff758c;font-weight:600;">console.groq.com</a> (No credit card needed!).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="voiceSelect">Dhwani's Voice</label>
+          <select id="voiceSelect" onchange="onVoiceChange(this.value)">
+            <option value="">Auto-Detect (Indian Female Preferred)</option>
+          </select>
+          <small id="selectedVoiceInfo">Detecting available voices...</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="rateRange">Speed: <span id="rateVal">0.9x</span></label>
+            <input type="range" id="rateRange" min="0.7" max="1.3" step="0.05" value="0.9" oninput="updateSpeechSetting('rate', this.value)">
+          </div>
+          <div class="form-group half">
+            <label for="pitchRange">Pitch: <span id="pitchVal">1.0</span></label>
+            <input type="range" id="pitchRange" min="0.8" max="1.3" step="0.05" value="1.0" oninput="updateSpeechSetting('pitch', this.value)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="avatarPosYRange">Avatar Vertical Focus: <span id="avatarPosVal">Face & Head (2%) ⭐</span></label>
+          <input type="range" id="avatarPosYRange" min="0" max="50" step="1" value="2" oninput="updateAvatarPosition(this.value)">
+          <small>Adjust vertical framing to center head/face (0-10% recommended for portraits).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="backendUrlInput">Backend API URL</label>
+          <input type="text" id="backendUrlInput" value="http://127.0.0.1:5000">
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-reset" onclick="resetSettings()" title="Reset all settings to original defaults">🔄 Reset Defaults</button>
+        <div class="footer-actions-right">
+          <button type="button" class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Preferences</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast"></div>
+
+  <!-- JAVASCRIPT -->
+  <script src="script.js"></script>
+</body>
+</html>

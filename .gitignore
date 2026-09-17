@@ -1,0 +1,20 @@
+﻿# ==========================================
+# SECURITY: NEVER SHARE OR COMMIT API KEYS!
+# ==========================================
+.env
+*.env
+*.env.local
+Dhwani.AI-Backend/.env
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+env/
+venv/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
